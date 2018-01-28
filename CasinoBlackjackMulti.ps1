@@ -1,4 +1,4 @@
-﻿# Settings/options/variables:
+# Settings/options/variables:
 
 # Max players (not including dealer)
 $MaxPlayers = 4
@@ -55,36 +55,48 @@ $MoneyLossColour = "Red"
 # Unaccepted input
 $ExInputColour = "Yellow"
 
-# To try and maintain consistency with Powershell defaults
-# the following colours are automatically set by OS version::
-
-# Hands & hand values
-$CurrentHandColour = "White"
-# Player options
-$OptionsColour = "White"
-# Initial/split deals
-$DealColour = "White"
-
-# Change to False to override automatic colours & use above
-$CheckOSVersion = $True
-
-# Set automatic and default colours
-If ($CheckOSVersion) {
-    $OSVersion = (Get-WmiObject -Class Win32_OperatingSystem -ErrorAction SilentlyContinue).Version
-    If (($OSVersion -like "10*") -or ($OSVersion -like "6.3*") -or ($OSVersion -like "6.2*")) {
+Switch ($PSEdition) {
+    "Core" {
+        # Hands & hand values
         $CurrentHandColour = "White"
+        # Player options
         $OptionsColour = "White"
+        # Initial/split deals
         $DealColour = "White"
     }
-    Elseif (($OSVersion -like "6.1*") -or ($OSVersion -like "6.0*") -or ($OSVersion -like "5.2*") -or ($OSVersion -like "5.1*")) {
-        $CurrentHandColour = "Gray"
-        $OptionsColour = "Gray"
-        $DealColour = "Gray"
-    }
-    Else {
+    "Desktop" {
+        # To try and maintain consistency with Powershell defaults
+        # the following colours are automatically set by OS version::
+
+        # Hands & hand values
         $CurrentHandColour = "White"
+        # Player options
         $OptionsColour = "White"
+        # Initial/split deals
         $DealColour = "White"
+
+        # Change to False to override automatic colours & use above on Desktop/Windows
+        $CheckOSVersion = $True
+
+        # Set automatic and default colours
+        If ($CheckOSVersion) {
+            $OSVersion = (Get-WmiObject -Class Win32_OperatingSystem -ErrorAction SilentlyContinue).Version
+            If (($OSVersion -like "10*") -or ($OSVersion -like "6.3*") -or ($OSVersion -like "6.2*")) {
+                $CurrentHandColour = "White"
+                $OptionsColour = "White"
+                $DealColour = "White"
+            }
+            Elseif (($OSVersion -like "6.1*") -or ($OSVersion -like "6.0*") -or ($OSVersion -like "5.2*") -or ($OSVersion -like "5.1*")) {
+                $CurrentHandColour = "Gray"
+                $OptionsColour = "Gray"
+                $DealColour = "Gray"
+            }
+            Else {
+                $CurrentHandColour = "White"
+                $OptionsColour = "White"
+                $DealColour = "White"
+            }
+        }
     }
 }
 
