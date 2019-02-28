@@ -1,4 +1,6 @@
-# Settings/options/variables:
+############
+# Settings #
+############
 
 # Max players (not including dealer)
 $MaxPlayers = 4
@@ -40,7 +42,9 @@ $CharacterLimit = 30
 # Custom name whitespace control - If true names cannot contain two consecutive whitespace characters or start/end with them
 $WhiteSpaceControl = $True
 
-# Console output colours:
+###########
+# Colours #
+###########
 
 # Title/Player
 $TitleColour = "Cyan"
@@ -86,7 +90,7 @@ Switch ($PSEdition) {
                 $OptionsColour = "White"
                 $DealColour = "White"
             }
-            Elseif (($OSVersion -like "6.1*") -or ($OSVersion -like "6.0*") -or ($OSVersion -like "5.2*") -or ($OSVersion -like "5.1*")) {
+            ElseIf (($OSVersion -like "6.1*") -or ($OSVersion -like "6.0*") -or ($OSVersion -like "5.2*") -or ($OSVersion -like "5.1*")) {
                 $CurrentHandColour = "Gray"
                 $OptionsColour = "Gray"
                 $DealColour = "Gray"
@@ -100,14 +104,18 @@ Switch ($PSEdition) {
     }
 }
 
+#########
+# Cards #
+#########
+
 # Suits & Numbers in Unicode
 $Suits = [char]0x2660,[char]0x2663,[char]0x2665,[char]0x2666
 $Numbers = [char]0x0041,[char]0x0032,[char]0x0033,[char]0x0034,[char]0x0035,[char]0x0036,[char]0x0037,[char]0x0038,[char]0x0039,([char]0x0031+[char]0x0030),[char]0x004A,[char]0x0051,[char]0x004B
 
 # Hash table of cards to number values
 $CardValues = @{}
-Foreach ($Suit in $Suits) {
-	Foreach ($Number in $Numbers) {
+ForEach ($Suit in $Suits) {
+	ForEach ($Number in $Numbers) {
         Try {$IntValue = [convert]::ToInt32($Number, 10)}
         Catch [FormatException] {
             Switch ($Number) {
@@ -121,7 +129,9 @@ Foreach ($Suit in $Suits) {
     }
 }
 
-# Define functions
+#############
+# Functions #
+#############
 
 # Shuffle deck
 Function Shuffle-Deck {
@@ -129,13 +139,13 @@ Function Shuffle-Deck {
     $Script:Cards = New-Object System.Collections.ArrayList
     # Create decks
     For ($DeckCount = 1; $DeckCount -le $NumberOfDecks; $DeckCount++) {
-        Foreach ($Suit in $Suits) {
-	        Foreach ($Number in $Numbers) {$PreShuffle += $Number+$Suit}
+        ForEach ($Suit in $Suits) {
+	        ForEach ($Number in $Numbers) {$PreShuffle += $Number+$Suit}
 	    }
     }
     # Shuffle cards
     $PostShuffle = $PreShuffle | Sort-Object {Get-Random}
-    Foreach ($Entry in $PostShuffle) {[void]$Script:Cards.Add($Entry)}
+    ForEach ($Entry in $PostShuffle) {$Null = $Script:Cards.Add($Entry)}
 }
 
 # Get player hands
@@ -143,11 +153,11 @@ Function Get-PlayerHands {
     $DisplayCardsTable = @()
     $BiggestHandTable = @()
     # Determine biggest hand
-    Foreach ($Participant in $Script:PlayerList) {
+    ForEach ($Participant in $Script:PlayerList) {
         If (($BustedTable.$Participant -ne $True) -and ($BlackjackTable.$Participant -ne $True)) {
             If ($PlayerSplit.$Participant -eq $True) {
                 $HandList = Get-Variable SplitList$Participant -ValueOnly
-                Foreach ($Item in $HandList) {
+                ForEach ($Item in $HandList) {
                     $Hand = Get-Variable $Item -ValueOnly
                     $BiggestHandTable += $Hand.Count
                 }
@@ -159,12 +169,12 @@ Function Get-PlayerHands {
         }
     }
     $NumberOfIterations = ($BiggestHandTable | Measure -Maximum).Maximum
-    Foreach ($Participant in $Script:PlayerList) {
+    ForEach ($Participant in $Script:PlayerList) {
         If (($BustedTable.$Participant -ne $True) -and ($BlackjackTable.$Participant -ne $True)) {
             # Player split
             If ($PlayerSplit.$Participant -eq $True) {
                 $HandList = Get-Variable SplitList$Participant -ValueOnly
-                Foreach ($Item in $HandList) {
+                ForEach ($Item in $HandList) {
                     If (($SplitBusted.$Item -ne $True) -and ($SplitBlackjack.$Item -ne $True)) {
                         $SplitCards = Get-Variable $Item -ValueOnly
                         $NumberOfCards = $SplitCards.Count
@@ -174,7 +184,7 @@ Function Get-PlayerHands {
                         For ($Iteration = 0; $Iteration -lt $NumberOfIterations; $Iteration++) {
                             $CardName = $Iteration+1
                             If (($CardName -eq 3) -and ($SplitDouble.$Item -eq $True)) {$CardValue = '???'}
-                            Elseif ($CardName -gt $NumberOfCards) {$CardValue = '-'}
+                            ElseIf ($CardName -gt $NumberOfCards) {$CardValue = '-'}
                             Else {[string]$CardValue = $SplitCards[$Iteration]}
                             $CardsObject | Add-Member -MemberType NoteProperty -Name "Card $CardName" -Value $CardValue
                         }
@@ -192,7 +202,7 @@ Function Get-PlayerHands {
                 For ($Iteration = 0; $Iteration -lt $NumberOfIterations; $Iteration++) {
                     $CardName = $Iteration+1
                     If ((($CardName -eq 2) -and ($Participant -eq "Dealer")) -or (($CardName -eq 3) -and ($PlayerDouble.$Participant -eq $True))) {$CardValue = '???'}
-                    Elseif ($CardName -gt $NumberOfCards) {$CardValue = '-'}
+                    ElseIf ($CardName -gt $NumberOfCards) {$CardValue = '-'}
                     Else {[string]$CardValue = $Hand[$Iteration]}
                     $CardsObject | Add-Member -MemberType NoteProperty -Name "Card $CardName" -Value $CardValue
                 }
@@ -206,7 +216,7 @@ Function Get-PlayerHands {
 # Get bets
 Function Get-PlayerBets {
     $DisplayBetsTable = @()
-    Foreach ($Participant in $Script:PlayerList) {
+    ForEach ($Participant in $Script:PlayerList) {
         If ($Participant -ne "Dealer") {
             $PlayerBetTotal = $PlayerBetTable.$Participant
             $BetsObject = New-Object PsObject
@@ -230,7 +240,7 @@ Function Get-PlayerBets {
             If ($PlayerSplit.$Participant -eq $True) {
                 $SplitBetTotal = 0
                 $HandList = Get-Variable SplitList$Participant -ValueOnly
-                Foreach ($Item in $HandList) {
+                ForEach ($Item in $HandList) {
                     If (($SplitBusted.$Item -ne $True) -and ($SplitBlackjack.$Item -ne $True)) {
                         If ($SplitDouble.$Item -eq $True) {$SplitBetTotal += ($PlayerBetTable.$Participant)*2}
                         Else {$SplitBetTotal += $PlayerBetTable.$Participant}
@@ -266,7 +276,10 @@ Function Get-PlayerOptions {
     Write-Host " - Options (Display this message)" -ForegroundColor $OptionsColour
     Write-Host " - Cards (Show active hands)" -ForegroundColor $OptionsColour
     Write-Host " - Bets (Show active bets)" -ForegroundColor $OptionsColour
-    Foreach ($Item in $Choices) {Write-Host " - $Item" -ForegroundColor $OptionsColour}
+    ForEach ($Item in $Choices) {
+        If ($Item -eq "Stand") {Write-Host " - $Item ($Script:PlayerHandValue)" -ForegroundColor $OptionsColour}
+        Else {Write-Host " - $Item" -ForegroundColor $OptionsColour}
+    }
     Write-Host
 }
 
@@ -275,7 +288,7 @@ Function Get-ActivePlayers {
     # Check split players have hands
     If ($PlayerSplit.ContainsValue($True)) {
         $SplitHandCount = 0
-        Foreach ($HumanPlayer in $Script:PlayerList) {
+        ForEach ($HumanPlayer in $Script:PlayerList) {
             If (($HumanPlayer -ne "Dealer") -and ($PlayerSplit.$HumanPlayer -eq $True)) {
                 $SplitHandTest = Get-Variable SplitList$HumanPlayer -ValueOnly
                 $SplitHandCount += $SplitHandTest.Count
@@ -287,7 +300,7 @@ Function Get-ActivePlayers {
     Else {$ActiveSplitHands = $False}
     # Check if players bust/blackjack/split
     $ActivePlayers = @{}
-    Foreach ($HumanPlayer in $Script:PlayerList) {
+    ForEach ($HumanPlayer in $Script:PlayerList) {
         If ($HumanPlayer -ne "Dealer") {
             If (($BustedTable.$HumanPlayer -eq $True) -or ($BlackjackTable.$HumanPlayer -eq $True) -or ($PlayerSplit.$HumanPlayer -eq $True)) {$ActivePlayers.$HumanPlayer = $False}
             Else {$ActivePlayers.$HumanPlayer = $True}
@@ -306,20 +319,21 @@ Function Get-HandValue {
     $Script:DisplayHand = $Null
     $Script:DisplayHandValue = $Null
     # Count Aces & sum non-Aces
-    Foreach ($Card in $CurrentCards) {
+    ForEach ($Card in $CurrentCards) {
         [string]$Script:DisplayHand += "$Card "
         If ($Card[0] -eq "A") {$AceCount += 1}
         Else {$NonAceHandValue = $NonAceHandValue + ($CardValues.$Card)}
     }
-    # Determine hand value
     $Script:LowAceValue = 0
+    # Aces in hand
     If ($AceCount -gt 0) {
         $StartValue = $AceCount+$NonAceHandValue
         If ($StartValue -le 21) {
             [string]$Script:DisplayHandValue += "$StartValue"
             $AcePossibleAsc = @($AceCount)
             $AceCountRange = 1..$AceCount
-            Foreach ($Item in $AceCountRange) {
+            # Determine possible hand values
+            ForEach ($Item in $AceCountRange) {
                 $PossibleValue = ($Item*10)+$AceCount
                 $AcePossibleAsc += $PossibleValue
                 $TestDisplayValue = ($PossibleValue+$NonAceHandValue)
@@ -329,21 +343,28 @@ Function Get-HandValue {
             $Script:LowAceValue = $StartValue
             $TestCounter = 0
             $Script:PlayerHandValue = ($AcePossibleDesc[$TestCounter])+$NonAceHandValue
+            # Select highest possible hand value <= 21
             While ($Script:PlayerHandValue -gt 21) {
                 $TestCounter = $TestCounter+1
                 $Script:PlayerHandValue = ($AcePossibleDesc[$TestCounter])+$NonAceHandValue
             }
         }
+        # Min possible hand value is bust
         Else {
             $Script:PlayerHandValue = $StartValue
             $Script:DisplayHandValue = $StartValue
         }
     }
+    # No Aces
     Else {
         $Script:PlayerHandValue = $NonAceHandValue
         $Script:DisplayHandValue = $NonAceHandValue
     }
 }
+
+#########
+# Start #
+#########
 
 Write-Host "-------------------------" -ForegroundColor $TitleColour
 Write-Host "Welcome to"([char]0x2660)"Blackjack!"([char]0x2660) -ForegroundColor $TitleColour
@@ -395,7 +416,7 @@ While ($QuitValue -ne $True) {
     # Create empty hand for each player
     For ($AppendNumber = 1; $AppendNumber -le $NumberOfPlayers; $AppendNumber++) {
         New-Variable -Name Player$AppendNumber -Value (New-Object System.Collections.ArrayList) -ErrorAction SilentlyContinue
-        [void]$PlayerList.Add('Player'+$AppendNumber)
+        $Null = $PlayerList.Add('Player'+$AppendNumber)
     }
     # Assign names
     Write-Host
@@ -405,7 +426,7 @@ While ($QuitValue -ne $True) {
         Write-Host
         Write-Host "Character limit: $CharacterLimit"
         Start-Sleep -Milliseconds $MessageDelay
-        Foreach ($Player in $Script:PlayerList) {
+        ForEach ($Player in $Script:PlayerList) {
             Write-Host
             $NameSuccessful = $False
             While ($NameSuccessful -ne $True) {
@@ -417,22 +438,22 @@ While ($QuitValue -ne $True) {
                     Write-Host
                 }
                 # Get creative with whitespace control as v2 does not support [String]::IsNullOrWhiteSpace($Str) static method
-                Elseif (($WhiteSpaceControl) -and (($Name -like " *") -or ($Name -like "* ") -or ($Name -like "*  *"))) {
+                ElseIf ($WhiteSpaceControl -and ($Name -match "(^\s)|(.*\s\s.*)|(\s$)")) {
                     # Name starts/ends with whitespace
-                    If (($Name -like " *") -or ($Name -like "* ")) {
-                    Write-Host
-                    Write-Host "Name cannot start or end with whitespace" -ForegroundColor $ExInputColour
-                    Write-Host
+                    If ($Name -match "(^\s)|(\s$)") {
+                        Write-Host
+                        Write-Host "Name cannot start or end with whitespace" -ForegroundColor $ExInputColour
+                        Write-Host
                     }
                     # Name has two or more consecutive whitespace characters
-                    Elseif ($Name -like "*  *") {
+                    ElseIf ($Name -match ".*\s\s.*") {
                         Write-Host
                         Write-Host "Name cannot have two or more consecutive whitespace characters" -ForegroundColor $ExInputColour
                         Write-Host
                     }
                 }
                 # Over character limit
-                Elseif ($Name.Length -gt $CharacterLimit) {
+                ElseIf ($Name.Length -gt $CharacterLimit) {
                     Write-Host
                     Write-Host "Name exceeds the character limit of $CharacterLimit" -ForegroundColor $ExInputColour
                     Write-Host
@@ -442,12 +463,12 @@ While ($QuitValue -ne $True) {
             $PlayerNames.$Player = $Name
         }
     }
-    Else {Foreach ($Player in $Script:PlayerList) {$PlayerNames.$Player = $Player}}
+    Else {ForEach ($Player in $Script:PlayerList) {$PlayerNames.$Player = $Player}}
     # Create wallets
-    Foreach ($Player in $Script:PlayerList) {$PlayerWallets.$Player = $StartingMoney}
+    ForEach ($Player in $Script:PlayerList) {$PlayerWallets.$Player = $StartingMoney}
     # Create dealer
     $Dealer = New-Object System.Collections.ArrayList
-    [void]$PlayerList.Add("Dealer")
+    $Null = $PlayerList.Add("Dealer")
     $PlayerNames."Dealer" = "Dealer"
     $DealerWallet = $CasinoBank
     # Start game
@@ -467,7 +488,7 @@ While ($QuitValue -ne $True) {
         $DealerBlackjack = $False
         $DealerBusted = $False
         $EndRound = $False
-        Foreach ($Player in $Script:PlayerList) {
+        ForEach ($Player in $Script:PlayerList) {
             $MoveFinished.$Player = $False
             If ($Player -ne "Dealer") {
                 $PlayerSplit.$Player = $False
@@ -483,15 +504,14 @@ While ($QuitValue -ne $True) {
             Start-Sleep -Milliseconds $MessageDelay
             Shuffle-Deck
         }
-        Elseif ($ShuffleCount -eq $ShuffleLimit) {
+        ElseIf ($ShuffleCount -eq $ShuffleLimit) {
             Write-Host
             Write-Host "$ShuffleLimit rounds played, shuffling cards..."
             Start-Sleep -Milliseconds $MessageDelay
             Shuffle-Deck
             $ShuffleCount = 0
         }
-        $ShuffleCount += 1
-        $RoundCount += 1
+        $Null = $ShuffleCount++,$RoundCount++
         $RoundCountLength = ([string]$RoundCount).Length
         $RoundTitleLines = ("-")*(6+$RoundCountLength)
         Write-Host
@@ -501,12 +521,12 @@ While ($QuitValue -ne $True) {
         Write-Host
         Start-Sleep -Milliseconds $MessageDelay
         # Take bets
-        Foreach ($Player in $Script:PlayerList) {
+        ForEach ($Player in $Script:PlayerList) {
             If ($Player -ne "Dealer") {
                 If ($NoMaxBet) {$MaxBet = $PlayerWallets.$Player}
-                Elseif ($DynamicBetScaling) {
+                ElseIf ($DynamicBetScaling) {
                     If (($PlayerWallets.$Player) -gt ($ScaleStart*$OverallMaximumBet)) {[int]$MaxBet = ($PlayerWallets.$Player)/$BetScale}
-                    Elseif ($PlayerWallets.$Player -lt $OverallMaximumBet) {$MaxBet = $PlayerWallets.$Player}
+                    ElseIf ($PlayerWallets.$Player -lt $OverallMaximumBet) {$MaxBet = $PlayerWallets.$Player}
                     Else {$MaxBet = $OverallMaximumBet}
                 }
                 Else {
@@ -557,10 +577,10 @@ While ($QuitValue -ne $True) {
         Write-Host "Dealing cards..."
         Write-Host
         For ($InitialDeal = 1; $InitialDeal -le 2; $InitialDeal++) {
-            Foreach ($Player in $Script:PlayerList) {
+            ForEach ($Player in $Script:PlayerList) {
                 Start-Sleep -Milliseconds $MessageDelay
                 $CurrentHand = Get-Variable $Player -ValueOnly
-                [void]$CurrentHand.Add($Script:Cards[0])
+                $Null = $CurrentHand.Add($Script:Cards[0])
                 Set-Variable $Player -Value $CurrentHand
                 If (($Player -eq "Dealer") -and ($InitialDeal -eq 2)) {$CardDealt = "???"}
                 Else {$CardDealt = $Script:Cards[0]}
@@ -576,7 +596,7 @@ While ($QuitValue -ne $True) {
             $InsurancePrompt = $Null
             While ("Y","YES","N","NO" -notcontains $InsurancePrompt) {$InsurancePrompt = (Read-Host "Do any players want to make insurance bets?(Y/N)").ToUpper()}
             If ("Y","YES" -contains $InsurancePrompt) {
-                Foreach ($Player in $Script:PlayerList) {
+                ForEach ($Player in $Script:PlayerList) {
                     If ($Player -ne "Dealer") {
                         $InsuranceTrigger.$Player = $True
                         # Check player wallet has money
@@ -642,8 +662,8 @@ While ($QuitValue -ne $True) {
                     }
                 }
             }
-            Elseif ("N","NO" -contains $InsurancePrompt) {
-                Foreach ($Player in $Script:PlayerList) {$InsuranceTrigger.$Player = $False}
+            ElseIf ("N","NO" -contains $InsurancePrompt) {
+                ForEach ($Player in $Script:PlayerList) {$InsuranceTrigger.$Player = $False}
             }
         }
         # Check for dealer blackjack if face up is Ace or 10-card
@@ -657,7 +677,7 @@ While ($QuitValue -ne $True) {
                 Write-Host "Dealers second card is" $Dealer[1] "- Dealer has blackjack!"
                 $DealerBlackjack = $True
                 $EndRound = $True
-                Foreach ($Player in $Script:PlayerList) {
+                ForEach ($Player in $Script:PlayerList) {
                     If ($Player -ne "Dealer") {
                         Write-Host
                         $PlayerHand = Get-Variable $Player -ValueOnly
@@ -708,7 +728,7 @@ While ($QuitValue -ne $True) {
         }
         # Start player/dealer turns
         While ($EndRound -ne $True) {
-            Foreach ($Player in $Script:PlayerList) {
+            ForEach ($Player in $Script:PlayerList) {
                 Get-ActivePlayers
                 # Dealer moves
                 If (($Player -eq "Dealer") -and $Script:HandsInPlay) {
@@ -746,17 +766,17 @@ While ($QuitValue -ne $True) {
                                 $MoveFinished."Dealer" = $True
                             }
                             # Dealer hits
-                            Elseif ($Script:PlayerHandValue -lt 17) {
+                            ElseIf ($Script:PlayerHandValue -lt 17) {
                                 Start-Sleep -Milliseconds $MessageDelay
                                 Write-Host "Dealer hits and is dealt" $Script:Cards[0] -ForegroundColor $ActionColour
-                                [void]$Dealer.Add($Script:Cards[0])
+                                $Null = $Dealer.Add($Script:Cards[0])
                                 $Script:Cards.RemoveAt(0)
                             }
                         }
                     }
                 }
                 # Player moves
-                Elseif ($Player -ne "Dealer") {
+                ElseIf ($Player -ne "Dealer") {
                     $NameTitleLines = ("-")*((($PlayerNames.$Player).Length)+18)
                     Start-Sleep -Milliseconds $MessageDelay
                     Write-Host
@@ -803,11 +823,11 @@ While ($QuitValue -ne $True) {
                                 # Determine options
                                 If ($PlayerHand.Count -eq 2) {
                                     If (((($CardValues.($PlayerHand[0])) -eq 5) -and (($CardValues.($PlayerHand[1])) -eq 5)) -and ($PlayerWallets.$Player -ge $PlayerBetTable.$Player)) {$PlayerOptions = 'Hit','Stand','Split','Double'}
-                                    Elseif (($PlayerHand[0][0] -eq $PlayerHand[1][0]) -and ($PlayerWallets.$Player -ge $PlayerBetTable.$Player)) {$PlayerOptions = 'Hit','Stand','Split'}
-                                    Elseif (((9,10,11 -contains $Script:PlayerHandValue) -or (9,10,11 -contains $Script:LowAceValue)) -and ($PlayerWallets.$Player -ge $PlayerBetTable.$Player)) {$PlayerOptions = 'Hit','Stand','Double'}
+                                    ElseIf (($PlayerHand[0][0] -eq $PlayerHand[1][0]) -and ($PlayerWallets.$Player -ge $PlayerBetTable.$Player)) {$PlayerOptions = 'Hit','Stand','Split'}
+                                    ElseIf (((9,10,11 -contains $Script:PlayerHandValue) -or (9,10,11 -contains $Script:LowAceValue)) -and ($PlayerWallets.$Player -ge $PlayerBetTable.$Player)) {$PlayerOptions = 'Hit','Stand','Double'}
                                     Else {$PlayerOptions = 'Hit','Stand'}
                                 }
-                                Elseif (($PlayerHand.Count -gt 2) -and ($Script:PlayerHandValue -eq 21) -and ($Script:LowAceValue -ne 11) -and ($ForceStand)) {$PlayerOptions = 'Stand'}
+                                ElseIf (($PlayerHand.Count -gt 2) -and ($Script:PlayerHandValue -eq 21) -and ($Script:LowAceValue -ne 11) -and ($ForceStand)) {$PlayerOptions = 'Stand'}
                                 Else {$PlayerOptions = 'Hit','Stand'}
                                 Start-Sleep -Milliseconds $MessageDelay
                                 If (($PlayerHand.Count -gt 2) -and ($Script:PlayerHandValue -eq 21) -and ($AutoStand)) {$PlayerMovePrompt = 'Stand'}
@@ -825,7 +845,7 @@ While ($QuitValue -ne $True) {
                                             'Bets' {Get-PlayerBets}
                                         }
                                     }
-                                    Elseif ($PlayerOptions -notcontains $PlayerMovePrompt) {
+                                    ElseIf ($PlayerOptions -notcontains $PlayerMovePrompt) {
                                         Write-Host
                                         Write-Host "Hint: type 'options' to see available moves" -ForegroundColor $ExInputColour
                                         Write-Host
@@ -836,7 +856,7 @@ While ($QuitValue -ne $True) {
                                     'Hit' {
                                         Write-Host
                                         Write-Host $PlayerNames.$Player "hits and is dealt" $Script:Cards[0] -ForegroundColor $ActionColour
-                                        [void]$PlayerHand.Add($Script:Cards[0])
+                                        $Null = $PlayerHand.Add($Script:Cards[0])
                                         Set-Variable $Player -Value $PlayerHand
                                         $Script:Cards.RemoveAt(0)
                                     }
@@ -862,7 +882,7 @@ While ($QuitValue -ne $True) {
                                         Start-Sleep -Milliseconds $MessageDelay
                                         Write-Host
                                         Write-Host $PlayerNames.$Player "draws a card face down and stands" -ForegroundColor $ActionColour
-                                        [void]$PlayerHand.Add($Script:Cards[0])
+                                        $Null = $PlayerHand.Add($Script:Cards[0])
                                         Set-Variable $Player -Value $PlayerHand
                                         $Script:Cards.RemoveAt(0)
                                         $MoveFinished.$Player = $True
@@ -883,32 +903,32 @@ While ($QuitValue -ne $True) {
                                         $PlayerSplit.$Player = $True
                                         New-Variable SplitList$Player -Value (New-Object System.Collections.ArrayList)
                                         $SplitList = Get-Variable SplitList$Player -ValueOnly
-                                        [void]$SplitList.Add("Split1$Player")
-                                        [void]$SplitList.Add("Split2$Player")
+                                        $Null = $SplitList.Add("Split1$Player")
+                                        $Null = $SplitList.Add("Split2$Player")
                                         Set-Variable SplitList$Player -Value $SplitList
                                         New-Variable Split1$Player -Value (New-Object System.Collections.ArrayList)
                                         New-Variable Split2$Player -Value (New-Object System.Collections.ArrayList)
                                         $Split1Hand = Get-Variable Split1$Player -ValueOnly
-                                        [void]$Split1Hand.Add($PlayerHand[0])
+                                        $Null = $Split1Hand.Add($PlayerHand[0])
                                         Start-Sleep -Milliseconds $MessageDelay
                                         Write-Host
                                         Write-Host $PlayerNames.$Player "left hand is dealt" $Script:Cards[0] -ForegroundColor $DealColour
-                                        [void]$Split1Hand.Add($Script:Cards[0])
+                                        $Null = $Split1Hand.Add($Script:Cards[0])
                                         Set-Variable Split1$Player -Value $Split1Hand
                                         $PlayerHand.RemoveAt(0)
                                         $Script:Cards.RemoveAt(0)
                                         $Split2Hand = Get-Variable Split2$Player -ValueOnly
-                                        [void]$Split2Hand.Add($PlayerHand[0])
+                                        $Null = $Split2Hand.Add($PlayerHand[0])
                                         Start-Sleep -Milliseconds $MessageDelay
                                         Write-Host $PlayerNames.$Player "right hand is dealt" $Script:Cards[0] -ForegroundColor $DealColour
-                                        [void]$Split2Hand.Add($Script:Cards[0])
+                                        $Null = $Split2Hand.Add($Script:Cards[0])
                                         Set-Variable Split2$Player -Value $Split2Hand
                                         $PlayerHand.RemoveAt(0)
                                         $Script:Cards.RemoveAt(0)
                                         $SplitRemovalList = @()
                                         $SplitCounter = 0
                                         # Start split turns
-                                        Foreach ($Split in $SplitList) {
+                                        ForEach ($Split in $SplitList) {
                                             $SplitCounter = $SplitCounter+1
                                             $SplitTitleLines = ("-")*((($PlayerNames.$Player).Length)+15)
                                             Start-Sleep -Milliseconds $MessageDelay
@@ -967,7 +987,7 @@ While ($QuitValue -ne $True) {
                                                         Else {
                                                             # Determine options
                                                             If (($SplitHand.Count -eq 2) -and ((9,10,11 -contains $Script:PlayerHandValue) -or (9,10,11 -contains $Script:LowAceValue)) -and ($PlayerWallets.$Player -ge $PlayerBetTable.$Player)) {$SplitOptions = 'Hit','Stand','Double'}
-                                                            Elseif (($SplitHand.Count -gt 2) -and ($Script:PlayerHandValue -eq 21) -and ($Script:LowAceValue -ne 11) -and ($ForceStand)) {$SplitOptions = 'Stand'}
+                                                            ElseIf (($SplitHand.Count -gt 2) -and ($Script:PlayerHandValue -eq 21) -and ($Script:LowAceValue -ne 11) -and ($ForceStand)) {$SplitOptions = 'Stand'}
                                                             Else {$SplitOptions = 'Hit','Stand'}
                                                             If (($SplitHand.Count -gt 2) -and ($Script:PlayerHandValue -eq 21) -and ($AutoStand)) {$SplitMovePrompt = 'Stand'}
                                                             Else {
@@ -984,7 +1004,7 @@ While ($QuitValue -ne $True) {
                                                                         'Bets' {Get-PlayerBets}
                                                                     }
                                                                 }
-                                                                Elseif ($SplitOptions -notcontains $SplitMovePrompt) {
+                                                                ElseIf ($SplitOptions -notcontains $SplitMovePrompt) {
                                                                     Write-Host
                                                                     Write-Host "Hint: type 'options' to see available moves" -ForegroundColor $ExInputColour
                                                                     Write-Host
@@ -995,7 +1015,7 @@ While ($QuitValue -ne $True) {
                                                                 'Hit' {
                                                                     Write-Host
                                                                     Write-Host $PlayerNames.$Player "hits and is dealt" $Script:Cards[0] -ForegroundColor $ActionColour
-                                                                    [void]$SplitHand.Add($Script:Cards[0])
+                                                                    $Null = $SplitHand.Add($Script:Cards[0])
                                                                     Set-Variable $Split -Value $SplitHand
                                                                     $Script:Cards.RemoveAt(0)
                                                                 }
@@ -1021,7 +1041,7 @@ While ($QuitValue -ne $True) {
                                                                     Start-Sleep -Milliseconds $MessageDelay
                                                                     Write-Host
                                                                     Write-Host $PlayerNames.$Player "draws a card face down for split $SplitCounter and stands" -ForegroundColor $ActionColour
-                                                                    [void]$SplitHand.Add($Script:Cards[0])
+                                                                    $Null = $SplitHand.Add($Script:Cards[0])
                                                                     Set-Variable $Split -Value $SplitHand
                                                                     $Script:Cards.RemoveAt(0)
                                                                     $SplitFinished = $True
@@ -1033,7 +1053,7 @@ While ($QuitValue -ne $True) {
                                             }
                                         }
                                         If ($SplitRemovalList.Count -gt 0) {
-                                            Foreach ($Split in $SplitRemovalList) {
+                                            ForEach ($Split in $SplitRemovalList) {
                                                 $SplitList.Remove($Split)
                                                 Set-Variable SplitList$Player -Value $SplitList
                                             }
@@ -1045,7 +1065,7 @@ While ($QuitValue -ne $True) {
                         }
                     } # $MoveFinished loop
                 }
-            } # Foreach player loop
+            } # ForEach player loop
             # Start settlement
             Get-ActivePlayers
             If (($EndRound -ne $True) -and $Script:HandsInPlay) {
@@ -1053,7 +1073,7 @@ While ($QuitValue -ne $True) {
                 Write-Host "----------" -ForegroundColor $TitleColour
                 Write-Host "Settlement" -ForegroundColor $TitleColour
                 Write-Host "----------" -ForegroundColor $TitleColour
-                Foreach ($Player in $Script:PlayerList) {
+                ForEach ($Player in $Script:PlayerList) {
                     # Player not dealer, bust or blackjack
                     If (($Player -ne "Dealer") -and ($BustedTable.$Player -ne $True) -and ($BlackjackTable.$Player -ne $True)) {
                         $FinalPayout = 0
@@ -1062,7 +1082,7 @@ While ($QuitValue -ne $True) {
                             If ($PlayerSplit.$Player -eq $True) {
                                 $HandList = Get-Variable SplitList$Player -ValueOnly
                                 If ($HandList.Count -gt 0) {
-                                    Foreach ($Item in $HandList) {
+                                    ForEach ($Item in $HandList) {
                                         If ($SplitDouble.$Item -eq $True) {$FinalPayout += ($PlayerBetTable.$Player)*4}
                                         Else {$FinalPayout += ($PlayerBetTable.$Player)*2}
                                     }
@@ -1088,7 +1108,7 @@ While ($QuitValue -ne $True) {
                             # Player split cards
                             If ($PlayerSplit.$Player -eq $True) {
                                 $SplitList = Get-Variable SplitList$Player -ValueOnly
-                                Foreach ($Item in $SplitList) {
+                                ForEach ($Item in $SplitList) {
                                     $SplitHand = Get-Variable $Item -ValueOnly
                                     Get-HandValue -CurrentCards $SplitHand
                                     If ($SplitDouble.$Item -eq $True) {
@@ -1113,12 +1133,12 @@ While ($QuitValue -ne $True) {
                                             $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                             $DealerWallet = $DealerWallet-($FinalPayout/2)
                                         }
-                                        Elseif ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
+                                        ElseIf ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
                                             $FinalPayout = ($PlayerBetTable.$Player)*2
                                             Write-Host $PlayerNames.$Player "receives back their split bet of $FinalPayout" -ForegroundColor $MoneyEqualColour
                                             $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                         }
-                                        Elseif ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
+                                        ElseIf ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
                                             $FinalPayout = ($PlayerBetTable.$Player)*2
                                             Write-Host "Dealer collects split bet of $FinalPayout from" $PlayerNames.$Player -ForegroundColor $MoneyLossColour
                                             $DealerWallet = $DealerWallet+$FinalPayout
@@ -1132,12 +1152,12 @@ While ($QuitValue -ne $True) {
                                             $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                             $DealerWallet = $DealerWallet-($FinalPayout/2)
                                         }
-                                        Elseif ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
+                                        ElseIf ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
                                             $FinalPayout = $PlayerBetTable.$Player
                                             Write-Host $PlayerNames.$Player "receives back their split bet of $FinalPayout" -ForegroundColor $MoneyEqualColour
                                             $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                         }
-                                        Elseif ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
+                                        ElseIf ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
                                             $FinalPayout = $PlayerBetTable.$Player
                                             Write-Host "Dealer collects split bet of $FinalPayout from" $PlayerNames.$Player -ForegroundColor $MoneyLossColour
                                             $DealerWallet = $DealerWallet+$FinalPayout
@@ -1171,12 +1191,12 @@ While ($QuitValue -ne $True) {
                                         $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                         $DealerWallet = $DealerWallet-($FinalPayout/2)
                                     }
-                                    Elseif ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
+                                    ElseIf ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
                                         $FinalPayout = ($PlayerBetTable.$Player)*2
                                         Write-Host $PlayerNames.$Player "receives back their bet of $FinalPayout" -ForegroundColor $MoneyEqualColour
                                         $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                     }
-                                    Elseif ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
+                                    ElseIf ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
                                         $FinalPayout = ($PlayerBetTable.$Player)*2
                                         Write-Host "Dealer collects bet of $FinalPayout from" $PlayerNames.$Player -ForegroundColor $MoneyLossColour
                                         $DealerWallet = $DealerWallet+$FinalPayout
@@ -1190,12 +1210,12 @@ While ($QuitValue -ne $True) {
                                         $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                         $DealerWallet = $DealerWallet-($FinalPayout/2)
                                     }
-                                    Elseif ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
+                                    ElseIf ($Script:PlayerHandValue -eq $Script:DealerStandValue) {
                                         $FinalPayout = $PlayerBetTable.$Player
                                         Write-Host $PlayerNames.$Player "receives back their bet of $FinalPayout" -ForegroundColor $MoneyEqualColour
                                         $PlayerWallets.$Player = ($PlayerWallets.$Player)+$FinalPayout
                                     }
-                                    Elseif ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
+                                    ElseIf ($Script:PlayerHandValue -lt $Script:DealerStandValue) {
                                         $FinalPayout = $PlayerBetTable.$Player
                                         Write-Host "Dealer collects bet of $FinalPayout from" $PlayerNames.$Player -ForegroundColor $MoneyLossColour
                                         $DealerWallet = $DealerWallet+$FinalPayout
@@ -1210,12 +1230,12 @@ While ($QuitValue -ne $True) {
         } # $EndRound loop
         # Round cleanup
         $PlayerRemovalList = @()
-        Foreach ($Player in $Script:PlayerList) {
+        ForEach ($Player in $Script:PlayerList) {
             # Put dealer cards back into deck
             If ($Player -eq "Dealer") {
                 $DealerCount = $Dealer.Count
                 For ($CardCount = 1; $CardCount -le $DealerCount; $CardCount++) {
-                    [void]$Script:Cards.Add($Dealer[0])
+                    $Null = $Script:Cards.Add($Dealer[0])
                     $Dealer.RemoveAt(0)
                 }
             }
@@ -1227,11 +1247,11 @@ While ($QuitValue -ne $True) {
                     $SplitCount1 = $SplitHand1.Count
                     $SplitCount2 = $SplitHand2.Count
                     For ($CardCount = 1; $CardCount -le $SplitCount1; $CardCount++) {
-                        [void]$Script:Cards.Add($SplitHand1[0])
+                        $Null = $Script:Cards.Add($SplitHand1[0])
                         $SplitHand1.RemoveAt(0)
                     }
                     For ($CardCount = 1; $CardCount -le $SplitCount2; $CardCount++) {
-                        [void]$Script:Cards.Add($SplitHand2[0])
+                        $Null = $Script:Cards.Add($SplitHand2[0])
                         $SplitHand2.RemoveAt(0)
                     }
                     Remove-Variable SplitList$Player
@@ -1242,7 +1262,7 @@ While ($QuitValue -ne $True) {
                     $PlayerCards = Get-Variable $Player -ValueOnly
                     $PlayerCardsCount = $PlayerCards.Count
                     For ($CardCount = 1; $CardCount -le $PlayerCardsCount; $CardCount++) {
-                        [void]$Script:Cards.Add($PlayerCards[0])
+                        $Null = $Script:Cards.Add($PlayerCards[0])
                         $PlayerCards.RemoveAt(0)
                     }
                     Set-Variable $Player -Value $PlayerCards
@@ -1270,7 +1290,7 @@ While ($QuitValue -ne $True) {
             }
         }
         If ($PlayerRemovalList.Count -gt 0) {
-            Foreach ($Player in $PlayerRemovalList) {$PlayerList.Remove($Player)}
+            ForEach ($Player in $PlayerRemovalList) {$PlayerList.Remove($Player)}
         }
         $NextRoundPrompt = $Null
         Write-Host
@@ -1283,7 +1303,7 @@ While ($QuitValue -ne $True) {
             Start-Sleep -Milliseconds $MessageDelay
         }
         # End game if dealer bankrupt
-        Elseif ($DealerWallet -lt (($RemainingPlayers-1)*$OverallMaximumBet)) {
+        ElseIf ($DealerWallet -lt (($RemainingPlayers-1)*$OverallMaximumBet)) {
             $NextRoundPrompt = "N"
             Start-Sleep -Milliseconds $MessageDelay
             Write-Host "You have bankrupt the Dealer and been removed from the Casino!" -ForegroundColor $MoneyGainColour
@@ -1297,10 +1317,10 @@ While ($QuitValue -ne $True) {
     While ("Y","YES","N","NO" -notcontains $RestartPrompt) {
         $RestartPrompt = (Read-Host "Do you want to quit?(Y/N)").ToUpper()
         If ("Y","YES" -contains $RestartPrompt) {$QuitValue = $True}
-        Elseif ("N","NO" -contains $RestartPrompt) {
+        ElseIf ("N","NO" -contains $RestartPrompt) {
             Write-Host
             Write-Host "Restarting game..."
-            Foreach ($Player in $Script:PlayerList) {Remove-Variable -Name $Player}
+            ForEach ($Player in $Script:PlayerList) {Remove-Variable -Name $Player}
         }
     }
 } # $QuitValue loop
